@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from design import Ui_MainWindow
-import serial
 import sys
 
 
