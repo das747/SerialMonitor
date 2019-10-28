@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../SerialMonitor/.idea/SerialMonitor.iml" filepath="$PROJECT_DIR$/../SerialMonitor/.idea/SerialMonitor.iml" />
+      <module fileurl="file://$USER_HOME$/Documents/GitHub/pyserial/.idea/pyserial.iml" filepath="$USER_HOME$/Documents/GitHub/pyserial/.idea/pyserial.iml" />
     </modules>
   </component>
 </project>
