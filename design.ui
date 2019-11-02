@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>983</width>
-    <height>510</height>
+    <width>1064</width>
+    <height>630</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout_4">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -45,24 +45,27 @@
     <item>
      <widget class="QTabWidget" name="tab_widget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="io_tab">
        <attribute name="title">
         <string>Соединение</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="spacing">
+         <number>5</number>
+        </property>
         <property name="leftMargin">
-         <number>10</number>
+         <number>0</number>
         </property>
         <property name="topMargin">
-         <number>6</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
-         <number>10</number>
+         <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>10</number>
+         <number>0</number>
         </property>
         <item>
          <layout class="QVBoxLayout" name="output_layot">
@@ -117,14 +120,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QColumnView" name="column_view">
-            <property name="editTriggers">
-             <set>QAbstractItemView::NoEditTriggers</set>
-            </property>
-            <property name="showDropIndicator" stdset="0">
-             <bool>true</bool>
-            </property>
-           </widget>
+           <widget class="QTableView" name="out_field"/>
           </item>
           <item>
            <layout class="QHBoxLayout" name="bottom_output_layout">
@@ -142,6 +138,13 @@
              <widget class="QCheckBox" name="scroll_chk">
               <property name="text">
                <string>Добавлять отметки времени</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="form_out_chk">
+              <property name="text">
+               <string>Форматироанный вывод</string>
               </property>
              </widget>
             </item>
@@ -179,9 +182,9 @@
                <colorrole role="Mid">
                 <brush brushstyle="SolidPattern">
                  <color alpha="255">
-                  <red>128</red>
-                  <green>128</green>
-                  <blue>128</blue>
+                  <red>127</red>
+                  <green>127</green>
+                  <blue>127</blue>
                  </color>
                 </brush>
                </colorrole>
@@ -208,9 +211,9 @@
                <colorrole role="Mid">
                 <brush brushstyle="SolidPattern">
                  <color alpha="255">
-                  <red>128</red>
-                  <green>128</green>
-                  <blue>128</blue>
+                  <red>127</red>
+                  <green>127</green>
+                  <blue>127</blue>
                  </color>
                 </brush>
                </colorrole>
@@ -237,9 +240,9 @@
                <colorrole role="Mid">
                 <brush brushstyle="SolidPattern">
                  <color alpha="255">
-                  <red>128</red>
-                  <green>128</green>
-                  <blue>128</blue>
+                  <red>127</red>
+                  <green>127</green>
+                  <blue>127</blue>
                  </color>
                 </brush>
                </colorrole>
@@ -294,25 +297,58 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="port_layout">
-            <item>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
              <widget class="QLabel" name="port_switch_label">
               <property name="text">
                <string>Порт</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
              </widget>
             </item>
-            <item>
+            <item row="0" column="2">
+             <widget class="QPushButton" name="refresh_btn">
+              <property name="text">
+               <string>Обновить</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="baudrate_box">
+              <property name="editable">
+               <bool>false</bool>
+              </property>
+              <property name="currentIndex">
+               <number>-1</number>
+              </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QComboBox::AdjustToContents</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="7">
+             <widget class="QPushButton" name="connect_btn">
+              <property name="text">
+               <string>Подключиться</string>
+              </property>
+              <property name="checkable">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
              <widget class="QComboBox" name="port_box"/>
             </item>
-            <item>
+            <item row="0" column="3">
              <widget class="QLabel" name="input_delim_label">
               <property name="text">
                <string>Разделитель</string>
               </property>
              </widget>
             </item>
-            <item>
+            <item row="0" column="4">
              <widget class="QComboBox" name="input_delim_box">
               <property name="editable">
                <bool>true</bool>
@@ -343,121 +379,52 @@
               </item>
              </widget>
             </item>
-            <item>
-             <widget class="QLabel" name="baudreate_label">
+            <item row="1" column="4">
+             <widget class="QLineEdit" name="in_end_line">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>30</width>
+                <height>21</height>
+               </size>
+              </property>
               <property name="text">
-               <string>Скорость соединения</string>
+               <string>\n</string>
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QComboBox" name="baudrate_box">
-              <property name="editable">
-               <bool>false</bool>
-              </property>
-              <property name="currentIndex">
-               <number>4</number>
-              </property>
-              <property name="sizeAdjustPolicy">
-               <enum>QComboBox::AdjustToContents</enum>
-              </property>
-              <item>
-               <property name="text">
-                <string>300 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>1200 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>2400 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>4800 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>9600 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>19200 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>38400 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>57600 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>74880 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>115200 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>230400 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>250000 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>500000 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>1000000 бод</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>2000000 бод</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item>
+            <item row="0" column="5" colspan="2">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Maximum</enum>
+              </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>40</width>
+                <width>2000</width>
                 <height>20</height>
                </size>
               </property>
              </spacer>
             </item>
-            <item>
-             <widget class="QPushButton" name="connect_btn">
+            <item row="1" column="0">
+             <widget class="QLabel" name="baudreate_label">
               <property name="text">
-               <string>Подключиться</string>
+               <string>Скорость</string>
               </property>
-              <property name="checkable">
-               <bool>true</bool>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QLabel" name="in_end_label">
+              <property name="text">
+               <string>Конец строки</string>
               </property>
              </widget>
             </item>
@@ -471,17 +438,179 @@
        <attribute name="title">
         <string>Экспорт</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>5</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>DSV</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="dsv_layout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="dsv_delim_label">
+            <property name="text">
+             <string>Разделитель</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="3">
+           <widget class="QComboBox" name="dsv_quote_box">
+            <property name="sizeAdjustPolicy">
+             <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+            </property>
+            <item>
+             <property name="text">
+              <string>&quot;</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>'</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="dsv_delim_box">
+            <item>
+             <property name="text">
+              <string>,</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>\t</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>;</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>:</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QPushButton" name="dsv_export_btn">
+            <property name="text">
+             <string>Экспорт...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="dsv_quote_label">
+            <property name="text">
+             <string>Quotechar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>SQL database</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="sql_layout">
+          <item row="1" column="1">
+           <widget class="QPushButton" name="sql_new_table_btn">
+            <property name="text">
+             <string>Новая таблица...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="sql_connect_btn">
+            <property name="text">
+             <string>Подключить базу данных...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="sql_table_box"/>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="sql_add_btn">
+            <property name="text">
+             <string>Добавить в конец</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="sql_overwrite_btn">
+            <property name="text">
+             <string>Перезаписать</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionexport_as">
-   <property name="text">
-    <string>export as...</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>
