@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton
 from PyQt5.QtCore import Qt
 from design import Ui_MainWindow
@@ -23,12 +22,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.error_msg.move(45, 10)
         self.error_msg.setAlignment(Qt.AlignCenter)
 
-        for port, _, _ in comports():
-            self.port_box.addItem(port)
+        for baudrate in serial.Serial.BAUDRATES:
+            self.baudrate_box.addItem(str(baudrate) + ' бод')
+        self.baudrate_box.setCurrentIndex(12)
+
+        self.refresh_btn.clicked.connect(self.refresh_ports_list)
+        self.refresh_ports_list()
 
         self.connection = False
         self.connect_btn.clicked.connect(self.start_connection)
 
+        self.scroll_chk.clicked.connect(self.switch_scroll)
         self.show()
 
     def start_connection(self):
@@ -59,6 +63,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_btn.clicked.disconnect()
         self.connect_btn.clicked.connect(self.start_connection)
         self.update()
+
+    def refresh_ports_list(self):
+        self.port_box.clear()
+        for port, _, _ in comports():
+            self.port_box.addItem(port)
+
+    def switch_scroll(self):
+        self.out_field.setAutoScroll(self.scroll_chk.isChecked())
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
