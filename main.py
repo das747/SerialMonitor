@@ -15,26 +15,37 @@ class SerialUpdateThread(QThread):
         self.ser = serial_port
         self.delim = delimiter
         self.data = data
+        self.timer = QTime()
+
         super().__init__()
 
     def run(self):
         while self.main.connection:
-            if self.ser.in_waiting:
-                try:
+            try:
+                if self.ser.in_waiting:
                     line = self.ser.readline().strip().split(self.delim.encode())
-                    print(line)
                     if self.main.time_chk.isChecked():
-                        line.insert(0, self.main.timer.toString())
+                        line.insert(0, self.timer.currentTime().toString("H:mm:ss.z"))
                     if line:
+                        self.main.model.beginResetModel()
                         for i in range(len(line)):
                             if line[i].isdigit():
                                 line[i] = int(line[i])
-                            elif type(line[i]) != str and not line[i].startswith('\\'.encode()):
-                                line[i].decode()
-                        # self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
+                            elif type(line[i]) != str and line[i].isalpha():
+                                line[i] = line[i].decode()
                         self.data.append(line)
-                except serial.serialutil.SerialTimeoutException:
-                    pass
+                        self.main.model.endResetModel()
+                        if self.main.scroll_chk.isChecked():
+                            self.main.out_field.scrollToBottom()
+                        # self.main.model.dataChanged.emmit(self.main.model.createIndex(0, 0))
+            except serial.serialutil.SerialTimeoutException:
+                pass
+
+            except OSError:
+                self.main.stop_connection()
+                self.main.error_msg.setText('Device disconnected! Check wiring')
+                self.main.error_tab.exec()
+                self.main.refresh_ports_list()
 
 
 class TableModel(QAbstractTableModel):
@@ -47,7 +58,7 @@ class TableModel(QAbstractTableModel):
 
     def columnCount(self, parent=QModelIndex(), *args, **kwargs):
         if len(self.data):
-            return len(self.data[0])
+            return len(self.data[-1])
         else:
             return 0
 
@@ -56,14 +67,15 @@ class TableModel(QAbstractTableModel):
             return None
 
         if orientation == Qt.Horizontal:
-            return 1
+            return section
 
     def data(self, index=QModelIndex(), role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
-            print(0)
             return None
-        print(2)
-        return self.data[index.row()][index.column()]
+        if index.row() < len(self.data) and index.column() < len(self.data[index.row()]):
+            return self.data[index.row()][index.column()]
+        else:
+            return None
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -94,18 +106,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_btn.clicked.connect(self.start_connection)
 
         self.send_btn.clicked.connect(self.send)
-        self.scroll_chk.clicked.connect(self.switch_scroll)
         self.clear_btn.clicked.connect(self.clear_out)
-
-        self.update_timer = QTimer()
-        self.update_timer.setInterval(100)
-        self.update_timer.start()
 
         self.model = TableModel(self.data)
         self.out_field.setModel(self.model)
-
-        self.timer = QTime()
-        self.timer.start()
 
         self.show()
 
@@ -119,46 +123,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.baudrate_box.setEnabled(False)
             self.port_box.setEnabled(False)
             self.input_delim_box.setEnabled(False)
+            self.refresh_btn.setEnabled(False)
             self.send_btn.setEnabled(True)
 
             self.connection = True
             self.connect_btn.clicked.disconnect()
             self.connect_btn.clicked.connect(self.stop_connection)
             self.connect_btn.setText('Отключиться')
-            print(self.data)
             self.update_thread = SerialUpdateThread(self, self.ser, self.data, delimiter)
             self.update_thread.start()
 
         except serial.serialutil.SerialException:
+            self.refresh_ports_list()
             self.error_msg.setText('Connection failed! Check connection settings')
             self.error_tab.exec()
+
         self.update()
 
     def stop_connection(self):
-        # self.update_thread.terminate()
         self.connection = False
         sleep(0.6)
         self.ser.close()
         self.baudrate_box.setEnabled(True)
         self.port_box.setEnabled(True)
         self.input_delim_box.setEnabled(True)
+        self.refresh_btn.setEnabled(True)
         self.send_btn.setEnabled(False)
         self.connect_btn.clicked.disconnect()
         self.connect_btn.clicked.connect(self.start_connection)
         self.connect_btn.setText('Подключиться')
         self.update()
-        print(self.data)
-
-    # def update_data(self):
-    #     if self.connection:  # and self.ser.in_waiting:
-    #         line = self.ser.readline().strip().split()
-    #         if self.time_chk.isChecked():
-    #             line.insert(0, self.timer.toString())
-    #         if line:
-    #             self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
-    #             self.model.dataChanged.emit(self.model.createIndex(0, 1),
-    #                                         self.model.createIndex(0, 1))
-    #             print(1)
 
     def send(self):
         if self.connection:
@@ -178,11 +172,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for port, _, _ in comports():
             self.port_box.addItem(port)
 
-    def switch_scroll(self):
-        self.out_field.setAutoScroll(self.scroll_chk.isChecked())
-
     def clear_out(self):
-        pass
+        self.model.beginResetModel()
+        self.data.clear()
+        self.model.endResetModel()
 
 
 if __name__ == '__main__':

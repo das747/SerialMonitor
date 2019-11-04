@@ -125,7 +125,7 @@
           <item>
            <layout class="QHBoxLayout" name="bottom_output_layout">
             <item>
-             <widget class="QCheckBox" name="time_chk">
+             <widget class="QCheckBox" name="scroll_chk">
               <property name="text">
                <string>Автопрокрутка</string>
               </property>
@@ -135,16 +135,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="scroll_chk">
+             <widget class="QCheckBox" name="time_chk">
               <property name="text">
                <string>Добавлять отметки времени</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="form_out_chk">
-              <property name="text">
-               <string>Форматироанный вывод</string>
               </property>
              </widget>
             </item>
