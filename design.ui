@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1064</width>
-    <height>630</height>
+    <width>928</width>
+    <height>490</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
     <item>
      <widget class="QTabWidget" name="tab_widget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="io_tab">
        <attribute name="title">
@@ -304,7 +304,7 @@
                <string>Порт</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -339,19 +339,26 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="port_box"/>
+             <widget class="QComboBox" name="port_box">
+              <property name="sizeAdjustPolicy">
+               <enum>QComboBox::AdjustToContents</enum>
+              </property>
+             </widget>
             </item>
             <item row="0" column="3">
              <widget class="QLabel" name="input_delim_label">
               <property name="text">
                <string>Разделитель</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
              </widget>
             </item>
             <item row="0" column="4">
              <widget class="QComboBox" name="input_delim_box">
               <property name="editable">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
@@ -379,36 +386,17 @@
               </item>
              </widget>
             </item>
-            <item row="1" column="4">
-             <widget class="QLineEdit" name="in_end_line">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>30</width>
-                <height>21</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>\n</string>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="5" colspan="2">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeType">
-               <enum>QSizePolicy::Maximum</enum>
+               <enum>QSizePolicy::Expanding</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>2000</width>
+                <width>10</width>
                 <height>20</height>
                </size>
               </property>
@@ -419,12 +407,8 @@
               <property name="text">
                <string>Скорость</string>
               </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QLabel" name="in_end_label">
-              <property name="text">
-               <string>Конец строки</string>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>

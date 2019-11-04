@@ -64,6 +64,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_btn.clicked.connect(self.start_connection)
         self.update()
 
+    def update_data(self):
+        if self.connection:  # and self.ser.in_waiting:
+            delimiter = self.input_delim_box.currentText()
+            delimiter = CHAR_REF.get(delimiter, delimiter)
+            line = self.ser.readline().strip().split()
+            if self.time_chk.isChecked():
+                line.insert(0, self.timer.toString())
+            if line:
+                self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
+                self.model.dataChanged.emit(self.model.createIndex(0, 1),
+                                            self.model.createIndex(0, 1))
+                print(1)
     def refresh_ports_list(self):
         self.port_box.clear()
         for port, _, _ in comports():
