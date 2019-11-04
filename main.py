@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QTimer, QTime, QThread
 from design import Ui_MainWindow
+from time import sleep
 import serial
 from serial.tools.list_ports import comports
 import sys
@@ -9,25 +10,31 @@ CHAR_REF = {'\\n\\r': '\n\r', '\\n': '\n', '\\r': '\r', '\\t': '\t'}
 
 
 class SerialUpdateThread(QThread):
-    def __init__(self, main, baudrate, port, delimiter):
+    def __init__(self, main, serial_port, data, delimiter):
         self.main = main
-        self.port = port
+        self.ser = serial_port
         self.delim = delimiter
-        self.baudrate = baudrate
-        self.data = []
+        self.data = data
         super().__init__()
 
     def run(self):
-        try:
-            self.ser = serial.Serial(self.port, self.baudrate, timeout=0.5)
-        except serial.serialutil.SerialException:
-            self.main.error_msg.setText('Connection failed! Check connection settings')
-            self.main.error_tab.exec()
-
-        while True:
+        while self.main.connection:
             if self.ser.in_waiting:
-                self.ser.read()
-            self.ser.write(b'0x01')
+                try:
+                    line = self.ser.readline().strip().split(self.delim.encode())
+                    print(line)
+                    if self.main.time_chk.isChecked():
+                        line.insert(0, self.main.timer.toString())
+                    if line:
+                        for i in range(len(line)):
+                            if line[i].isdigit():
+                                line[i] = int(line[i])
+                            elif type(line[i]) != str and not line[i].startswith('\\'.encode()):
+                                line[i].decode()
+                        # self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
+                        self.data.append(line)
+                except serial.serialutil.SerialTimeoutException:
+                    pass
 
 
 class TableModel(QAbstractTableModel):
@@ -107,26 +114,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         port = self.port_box.currentText()
         delimiter = self.input_delim_box.currentText()
         delimiter = CHAR_REF.get(delimiter, delimiter)
-        self.baudrate_box.setEnabled(False)
-        self.port_box.setEnabled(False)
-        self.input_delim_box.setEnabled(False)
-        self.send_btn.setEnabled(True)
-        self.connection = True
-        self.connect_btn.clicked.disconnect()
+        try:
+            self.ser = serial.Serial(port, baudrate, timeout=0.5)
+            self.baudrate_box.setEnabled(False)
+            self.port_box.setEnabled(False)
+            self.input_delim_box.setEnabled(False)
+            self.send_btn.setEnabled(True)
 
-        self.connect_btn.clicked.connect(self.stop_connection)
-        self.connect_btn.setText('Отключиться')
-        print(self.data)
-        self.update_thread = SerialUpdateThread(self, baudrate, port, delimiter)
-        self.update_thread.start()
+            self.connection = True
+            self.connect_btn.clicked.disconnect()
+            self.connect_btn.clicked.connect(self.stop_connection)
+            self.connect_btn.setText('Отключиться')
+            print(self.data)
+            self.update_thread = SerialUpdateThread(self, self.ser, self.data, delimiter)
+            self.update_thread.start()
+
+        except serial.serialutil.SerialException:
+            self.error_msg.setText('Connection failed! Check connection settings')
+            self.error_tab.exec()
         self.update()
 
     def stop_connection(self):
+        # self.update_thread.terminate()
+        self.connection = False
+        sleep(0.6)
+        self.ser.close()
         self.baudrate_box.setEnabled(True)
         self.port_box.setEnabled(True)
         self.input_delim_box.setEnabled(True)
         self.send_btn.setEnabled(False)
-        self.connection = False
         self.connect_btn.clicked.disconnect()
         self.connect_btn.clicked.connect(self.start_connection)
         self.connect_btn.setText('Подключиться')
