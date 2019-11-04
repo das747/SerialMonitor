@@ -8,6 +8,28 @@ import sys
 CHAR_REF = {'\\n\\r': '\n\r', '\\n': '\n', '\\r': '\r', '\\t': '\t'}
 
 
+class SerialUpdateThread(QThread):
+    def __init__(self, main, baudrate, port, delimiter):
+        self.main = main
+        self.port = port
+        self.delim = delimiter
+        self.baudrate = baudrate
+        self.data = []
+        super().__init__()
+
+    def run(self):
+        try:
+            self.ser = serial.Serial(self.port, self.baudrate, timeout=0.5)
+        except serial.serialutil.SerialException:
+            self.main.error_msg.setText('Connection failed! Check connection settings')
+            self.main.error_tab.exec()
+
+        while True:
+            if self.ser.in_waiting:
+                self.ser.read()
+            self.ser.write(b'0x01')
+
+
 class TableModel(QAbstractTableModel):
     def __init__(self, data):
         super().__init__()
@@ -85,24 +107,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         port = self.port_box.currentText()
         delimiter = self.input_delim_box.currentText()
         delimiter = CHAR_REF.get(delimiter, delimiter)
-        try:
-            self.ser = serial.Serial(port, baudrate, timeout=0.5)
-            self.baudrate_box.setEnabled(False)
-            self.port_box.setEnabled(False)
-            self.input_delim_box.setEnabled(False)
-            self.send_btn.setEnabled(True)
-            self.connection = True
-            self.connect_btn.clicked.disconnect()
+        self.baudrate_box.setEnabled(False)
+        self.port_box.setEnabled(False)
+        self.input_delim_box.setEnabled(False)
+        self.send_btn.setEnabled(True)
+        self.connection = True
+        self.connect_btn.clicked.disconnect()
 
-            self.connect_btn.clicked.connect(self.stop_connection)
-            self.connect_btn.setText('Отключиться')
-            print(self.data)
-            self.update_thread = SerialUpdateThread(self, self.ser, self.data, delimiter)
-            self.update_thread.exec()
-
-        except serial.serialutil.SerialException:
-            self.error_msg.setText('Connection failed! Check connection settings')
-            self.error_tab.exec()
+        self.connect_btn.clicked.connect(self.stop_connection)
+        self.connect_btn.setText('Отключиться')
+        print(self.data)
+        self.update_thread = SerialUpdateThread(self, baudrate, port, delimiter)
+        self.update_thread.start()
         self.update()
 
     def stop_connection(self):
@@ -117,6 +133,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.update()
         print(self.data)
 
+    # def update_data(self):
+    #     if self.connection:  # and self.ser.in_waiting:
+    #         line = self.ser.readline().strip().split()
+    #         if self.time_chk.isChecked():
+    #             line.insert(0, self.timer.toString())
+    #         if line:
+    #             self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
+    #             self.model.dataChanged.emit(self.model.createIndex(0, 1),
+    #                                         self.model.createIndex(0, 1))
+    #             print(1)
 
     def send(self):
         if self.connection:
@@ -131,18 +157,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.ser.write(CHAR_REF.get(end, end).encode('utf8'))
             self.input_line.clear()
 
-    def update_data(self):
-        if self.connection:  # and self.ser.in_waiting:
-            delimiter = self.input_delim_box.currentText()
-            delimiter = CHAR_REF.get(delimiter, delimiter)
-            line = self.ser.readline().strip().split()
-            if self.time_chk.isChecked():
-                line.insert(0, self.timer.toString())
-            if line:
-                self.data.append(list(map(lambda v: int(v) if v.isdigit() else v, line)))
-                self.model.dataChanged.emit(self.model.createIndex(0, 1),
-                                            self.model.createIndex(0, 1))
-                print(1)
     def refresh_ports_list(self):
         self.port_box.clear()
         for port, _, _ in comports():
@@ -150,6 +164,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def switch_scroll(self):
         self.out_field.setAutoScroll(self.scroll_chk.isChecked())
+
+    def clear_out(self):
+        pass
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
