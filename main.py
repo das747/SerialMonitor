@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QDia
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QTime, QThread
 from design import Ui_MainWindow
 from time import sleep
@@ -109,16 +109,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.error_msg.move(45, 10)
         self.error_msg.setAlignment(Qt.AlignCenter)
 
-        self.exit_tab = QDialog(self)  # окно для вывода сообщения об ошибке
-        self.exit_tab.setWindowTitle('Error')
-        self.exit_tab.resize(400, 65)
-        self.exit_msg = QLabel('', self.exit_tab)
-        self.ok_btn = QPushButton('Ok', self.exit_tab)
-        self.ok_btn.move(180, 35)
-        self.ok_btn.setDefault(1)
-        self.ok_btn.clicked.connect(self.exit_tab.close)
-        self.exit_msg.move(45, 10)
-        self.exit_msg.setAlignment(Qt.AlignCenter)
+        self.exit_msg = QMessageBox()
+        self.exit_msg.setText('Выйти из приложения?')
+        self.exit_msg.setInformativeText('Все несохранённые данные будут потеряны, продолжить?')
+        self.exit_msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.exit_msg.setDefaultButton(QMessageBox.No)
 
         for baudrate in serial.Serial.BAUDRATES:  # заполнение возможных скоростей соединеня
             self.baudrate_box.addItem(str(baudrate) + ' бод')
@@ -211,9 +206,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.model.beginResetModel()
         self.data.clear()
         self.model.endResetModel()
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        
+
+    # вывод предупреждения при выходе
+    def closeEvent(self, QCloseEvent):
+        if self.exit_msg.exec() == QMessageBox.Yes:
+            QCloseEvent.accept()
+        else:
+            QCloseEvent.ignore()
 
 
 
