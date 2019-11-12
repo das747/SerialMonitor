@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QMessageBox, \
-    QFileDialog
+    QFileDialog, QInputDialog
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QTime, QThread
 from design import Ui_MainWindow
 from time import sleep
@@ -7,9 +7,10 @@ import serial  # библиотека дя работы с последоват�
 from serial.tools.list_ports import comports  # функция возвращающая список доступных портов
 import sys
 import csv
+import sqlite3
 
 # TODO:
-#  1. экспорт в SQL
+#  1. перезапись и добавление к SQL таблице
 #  2. добавить возможность задавать названия столбцов
 #  3. разобраться с вводом данных
 
@@ -110,13 +111,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.error_tab = QDialog(self)  # окно для вывода сообщения об ошибке
         self.error_tab.setWindowTitle('Error')
-        self.error_tab.resize(400, 65)
+        self.error_tab.resize(400, 100)
         self.error_msg = QLabel('', self.error_tab)
         self.ok_btn = QPushButton('Ok', self.error_tab)
-        self.ok_btn.move(180, 35)
+        self.ok_btn.move(180, 70)
         self.ok_btn.setDefault(1)
         self.ok_btn.clicked.connect(self.error_tab.close)
         self.error_msg.move(45, 10)
+        self.error_msg.resize(310, 60)
         self.error_msg.setAlignment(Qt.AlignCenter)
 
         self.exit_msg = QMessageBox()
@@ -143,6 +145,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.out_field.setModel(self.model)
 
         self.dsv_export_btn.clicked.connect(self.dsv_export)
+
+        self.sql_connect_btn.clicked.connect(self.connect_sql_bd)
+        self.sql_new_table_btn.clicked.connect(self.add_sql_table)
+        self.sql_overwrite_btn.clicked.connect(self.overwrite_sql_table)
+        self.sql_add_btn.clicked.connect(self.append_to_sql_table)
 
         self.show()
 
@@ -238,6 +245,70 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 writer = csv.writer(out, delimiter=delimiter,
                                     quotechar=self.dsv_quote_box.currentText())
                 writer.writerows(self.data)
+
+    def connect_sql_bd(self):
+        path, *_ = QFileDialog.getOpenFileName(self, 'Выбрать базу данных', '', "БД(*.db)")
+        if path:
+            self.con = sqlite3.connect(path)
+            self.cur = self.con.cursor()
+            tables = self.cur.execute(
+                    '''select * from sqlite_master where type = 'table' ''').fetchall()
+            for table_name in [table[2] for table in tables]:
+                self.sql_table_box.addItem(table_name)
+
+            self.sql_table_box.setEnabled(True)
+            self.sql_add_btn.setEnabled(True)
+            self.sql_new_table_btn.setEnabled(True)
+            self.sql_overwrite_btn.setEnabled(True)
+
+            self.sql_connect_btn.disconnect()
+            self.sql_connect_btn.setText('Отключить базу данных')
+            self.sql_connect_btn.clicked.connect(self.disconnect_sql_bd)
+
+    def disconnect_sql_bd(self):
+        self.con.commit()
+        self.cur.close()
+        self.con.close()
+
+        self.sql_table_box.setEnabled(False)
+        self.sql_add_btn.setEnabled(False)
+        self.sql_new_table_btn.setEnabled(False)
+        self.sql_overwrite_btn.setEnabled(False)
+        self.sql_table_box.clear()
+
+        self.sql_connect_btn.disconnect()
+        self.sql_connect_btn.setText('Подключить базу данных...')
+        self.sql_connect_btn.clicked.connect(self.connect_sql_bd)
+
+    def add_sql_table(self):
+        if self.data:
+            table_name, ok = QInputDialog.getText(self, 'Новая таблица', 'Введите название таблицы')
+            if ok:
+                if any(w.isdigit() for w in table_name.split()):
+                    table_name = '[' + table_name + ']'
+                columns = []
+                for n, col in enumerate(self.data[0]):
+                    data_type = 'int' if type(col) is int else 'string'
+                    col_name = str(n)
+                    if any(w.isdigit() for w in col_name.split()):
+                        col_name = '[' + col_name + ']'
+                    columns.append(col_name + ' ' + data_type)
+                try:
+                    self.cur.execute(f'''CREATE TABLE {table_name} ({', '.join(columns)});''')
+
+                except sqlite3.OperationalError:
+                    self.error_msg.setText('''Не удалось создать таблицу. 
+    Проверьте корректность названия''')
+                    self.error_tab.exec()
+        else:
+            self.error_msg.setText('Нет данных для создания таблицы')
+            self.error_tab.exec()
+
+    def append_to_sql_table(self):
+        pass
+
+    def overwrite_sql_table(self):
+
 
 
 if __name__ == '__main__':

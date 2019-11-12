@@ -534,6 +534,9 @@
          <layout class="QGridLayout" name="sql_layout">
           <item row="1" column="1">
            <widget class="QPushButton" name="sql_new_table_btn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Новая таблица...</string>
             </property>
@@ -547,10 +550,17 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QComboBox" name="sql_table_box"/>
+           <widget class="QComboBox" name="sql_table_box">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
           </item>
           <item row="0" column="2">
            <widget class="QPushButton" name="sql_add_btn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Добавить в конец</string>
             </property>
@@ -558,6 +568,9 @@
           </item>
           <item row="1" column="2">
            <widget class="QPushButton" name="sql_overwrite_btn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Перезаписать</string>
             </property>
