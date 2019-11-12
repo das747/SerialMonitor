@@ -1,14 +1,17 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QMessageBox, \
+    QFileDialog
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QTime, QThread
 from design import Ui_MainWindow
 from time import sleep
 import serial  # библиотека дя работы с последовательными портами
 from serial.tools.list_ports import comports  # функция возвращающая список доступных портов
 import sys
+import csv
 
-# TODO: 1. исправить ошибку вывода при изменение кол-ва столбцов
+# TODO:
+#  1. экспорт в SQL
 #  2. добавить возможность задавать названия столбцов
-#  3. разобраться с вводом значений
+#  3. разобраться с вводом данных
 
 
 # словарь для преобразования значений выпадающих списков
@@ -34,19 +37,18 @@ class SerialUpdateThread(QThread):
                 # если есть данные на входе, считываем их и дополняем таблицу
                 if self.ser.in_waiting:
                     line = self.ser.readline().strip().split(self.delim.encode())
-                    if self.main.time_chk.isChecked():
-                        line.insert(0, self.timer.currentTime().toString("H:mm:ss.z"))
-                    if line:
-                        self.main.model.beginResetModel()
-                        for i in range(len(line)):
-                            if line[i].isdigit():
-                                line[i] = int(line[i])
-                            elif type(line[i]) != str and line[i].isalpha():
-                                line[i] = line[i].decode()
-                        self.data.append(line)
-                        self.main.model.endResetModel()
-                        if self.main.scroll_chk.isChecked():
-                            self.main.out_field.scrollToBottom()
+                    line.insert(0, self.timer.currentTime().toString("H:mm:ss.z") *
+                                self.main.time_chk.isChecked())
+                    self.main.model.beginResetModel()
+                    for i in range(len(line)):
+                        if line[i].isdigit():
+                            line[i] = int(line[i])
+                        elif type(line[i]) != str and line[i].isalpha():
+                            line[i] = line[i].decode()
+                    self.data.append(line)
+                    self.main.model.endResetModel()
+                    if self.main.scroll_chk.isChecked():
+                        self.main.out_field.scrollToBottom()
                         # self.main.model.dataChanged.emmit(self.main.model.createIndex(0, 0))
             # если время приёма вышло, просто пытаемся принять ещё раз
             except serial.serialutil.SerialTimeoutException:
@@ -63,16 +65,20 @@ class SerialUpdateThread(QThread):
 
 # для вывода значений применяется model/view подход
 class TableModel(QAbstractTableModel):  # класс модели для отображения значений в TableView
-    def __init__(self, data):
+    def __init__(self, main, data):
+        self.main = main
         super().__init__()
-        self.data = data
+        self.data_table = data
 
     def rowCount(self, parent=QModelIndex(), *args, **kwargs):
-        return len(self.data)
+        return len(self.data_table)
 
     def columnCount(self, parent=QModelIndex(), *args, **kwargs):
-        if len(self.data):
-            return len(self.data[-1])
+        if self.data_table:
+            if self.main.time_chk.isChecked():
+                return len(self.data_table[0])
+            else:
+                return len(self.data_table[0]) - 1
         else:
             return 0
 
@@ -81,15 +87,19 @@ class TableModel(QAbstractTableModel):  # класс модели для ото�
             return None
 
         if orientation == Qt.Horizontal:
-            return section
+            if self.main.time_chk.isChecked():
+                return section
+            else:
+                return section + 1
 
     def data(self, index=QModelIndex(), role=Qt.DisplayRole):
-        if role != Qt.DisplayRole:
-            return None
-        if index.row() < len(self.data) and index.column() < len(self.data[index.row()]):
-            return self.data[index.row()][index.column()]
-        else:
-            return None
+        if role == Qt.DisplayRole:
+            if len(self.data_table):
+                row = index.row() + (not self.main.time_chk.isChecked())
+                col = index.column() + (not self.main.time_chk.isChecked())
+                if row < len(self.data_table) and col < len(self.data_table[row]):
+                    return self.data_table[row][col]
+        return None
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -129,8 +139,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.send_btn.clicked.connect(self.send)
         self.clear_btn.clicked.connect(self.clear_out)
 
-        self.model = TableModel(self.data)
+        self.model = TableModel(self, self.data)
         self.out_field.setModel(self.model)
+
+        self.dsv_export_btn.clicked.connect(self.dsv_export)
 
         self.show()
 
@@ -169,7 +181,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # функция остановки соединения
     def stop_connection(self):
         self.connection = False
-        sleep(0.6)  # ждём завершения потока приёма значений
+        while self.update_thread.isRunning():  # ждём остановки потока приёма данных
+            sleep(0.01)
         self.ser.close()
         self.baudrate_box.setEnabled(True)
         self.port_box.setEnabled(True)
@@ -210,10 +223,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # вывод предупреждения при выходе
     def closeEvent(self, QCloseEvent):
         if self.exit_msg.exec() == QMessageBox.Yes:
+            if self.connection:
+                self.stop_connection()
             QCloseEvent.accept()
         else:
             QCloseEvent.ignore()
 
+    def dsv_export(self):
+        name, *_ = QFileDialog.getSaveFileName()
+        if name:
+            with open(name, mode='w') as out:
+                delimiter = self.dsv_delim_box.currentText()
+                delimiter = CHAR_REF.get(delimiter, delimiter)
+                writer = csv.writer(out, delimiter=delimiter,
+                                    quotechar=self.dsv_quote_box.currentText())
+                writer.writerows(self.data)
 
 
 if __name__ == '__main__':
