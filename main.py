@@ -10,9 +10,7 @@ import csv
 import sqlite3
 
 # TODO:
-#  1. перезапись и добавление к SQL таблице
-#  2. добавить возможность задавать названия столбцов
-#  3. разобраться с вводом данных
+#  1. добавить возможность задавать названия столбцов
 
 
 # словарь для преобразования значений выпадающих списков
@@ -109,7 +107,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.data = []
 
-        self.error_tab = QDialog(self)  # окно для вывода сообщения об ошибке
+        # окно для вывода сообщения об ошибке, QMessageBox плохо работает с параллельными потоками
+        self.error_tab = QDialog(self)
         self.error_tab.setWindowTitle('Error')
         self.error_tab.resize(400, 100)
         self.error_msg = QLabel('', self.error_tab)
@@ -121,7 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.error_msg.resize(310, 60)
         self.error_msg.setAlignment(Qt.AlignCenter)
 
-        self.exit_msg = QMessageBox()
+        self.exit_msg = QMessageBox()  # окно предупреждения о выходе
         self.exit_msg.setText('Выйти из приложения?')
         self.exit_msg.setInformativeText('Все несохранённые данные будут потеряны, продолжить?')
         self.exit_msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -173,7 +172,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.connect_btn.clicked.connect(self.stop_connection)
             self.connect_btn.setText('Отключиться')
 
-            # запускаем поток приёма значений
+            # запускаем поток приёма данных
             self.update_thread = SerialUpdateThread(self, self.ser, self.data, delimiter)
             self.update_thread.start()
 
@@ -223,14 +222,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.model.endResetModel()
 
     # вывод предупреждения при выходе
-    def closeEvent(self, QCloseEvent):
+    def closeEvent(self, close_event):
         if self.exit_msg.exec() == QMessageBox.Yes:
             if self.connection:
                 self.stop_connection()
-            QCloseEvent.accept()
+            close_event.accept()
         else:
-            QCloseEvent.ignore()
+            close_event.ignore()
 
+    # экспорт в формат таблицы с разделителем
     def dsv_export(self):
         name, *_ = QFileDialog.getSaveFileName(self, 'Экспортировать в dsv', '', 'CSV(*.csv)')
         if name:
@@ -241,13 +241,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                     quotechar=self.dsv_quote_box.currentText())
                 writer.writerows(self.data)
 
+    # подключение к sql базе данных
     def connect_sql_bd(self):
         path, *_ = QFileDialog.getOpenFileName(self, 'Выбрать базу данных', '', "БД(*.db)")
         if path:
             self.con = sqlite3.connect(path)
             self.cur = self.con.cursor()
-            tables = self.cur.execute(
-                    '''select * from sqlite_master where type = 'table' ''').fetchall()
+
+            # получаем список таблиц
+            tables = self.cur.execute("select * from sqlite_master where type = 'table'").fetchall()
             for table_name in [table[2] for table in tables]:
                 self.sql_table_box.addItem(table_name)
 
@@ -260,6 +262,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.sql_connect_btn.setText('Отключить базу данных')
             self.sql_connect_btn.clicked.connect(self.disconnect_sql_bd)
 
+    # отключение от sql базы данных с сохранением изменнений
     def disconnect_sql_bd(self):
         self.con.commit()
         self.cur.close()
@@ -275,6 +278,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sql_connect_btn.setText('Подключить базу данных...')
         self.sql_connect_btn.clicked.connect(self.connect_sql_bd)
 
+    # добавление таблицы в sql базу данных
     def add_sql_table(self):
         if self.data:
             table_name, ok = QInputDialog.getText(self, 'Новая таблица', 'Введите название таблицы')
@@ -283,38 +287,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 columns = []
                 for n, col in enumerate(self.data[0]):
                     data_type = 'int' if type(col) is int else 'string'
-                    col_name = '[' + str(n) + ']'
+                    col_name = '[' + str(n) + ']'  # экранироание на случай неправильных названий
                     columns.append(col_name + ' ' + data_type)
                 try:
                     self.cur.execute(f'''CREATE TABLE {table_name} ({', '.join(columns)});''')
                     self.sql_table_box.addItem(table_name.strip('[]'))
 
+                # возможность ввода некорректного названия остаётся
                 except sqlite3.OperationalError:
                     self.error_msg.setText('''Не удалось создать таблицу. 
     Проверьте корректность названия''')
                     self.error_tab.exec()
-        else:
+        else:  # если нет данных, то нельзя определить форму таблицы
             self.error_msg.setText('Нет данных для создания таблицы')
             self.error_tab.exec()
 
+    # добавление данных в конец таблицы
     def append_to_sql_table(self):
         table_name = '[' + self.sql_table_box.currentText() + ']'
-        rows = ', '.join([str(tuple(d)) for d in self.data])
+        rows = ', '.join([str(tuple(d)) for d in self.data])  # форматируем данные для sql запроса
         try:
             self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
             self.con.commit()
+
+        # размерность или типы данных несовместимы с имеющейся таблицей
         except sqlite3.OperationalError:
             self.error_msg.setText('''Ошибка записи. Формат таблицы не 
        соответствует формату данных''')
             self.error_tab.exec()
 
+    # перезапись таблицы
     def overwrite_sql_table(self):
         table_name = '[' + self.sql_table_box.currentText() + ']'
-        self.cur.execute(f'DELETE from {table_name}')
-        rows = ', '.join([str(tuple(d)) for d in self.data])
+        self.cur.execute(f'DELETE from {table_name}')  # очищаем исходную таблицу
+        rows = ', '.join([str(tuple(d)) for d in self.data])  # форматируем данные для sql запроса
         try:
             self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
             self.con.commit()
+
+        # размерность или типы данных несовместимы с имеющейся таблицей
         except sqlite3.OperationalError:
             self.error_msg.setText('''Ошибка записи. Формат таблицы не 
        соответствует формату данных''')
