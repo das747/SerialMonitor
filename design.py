@@ -151,6 +151,7 @@ class Ui_MainWindow(object):
         self.input_delim_box.addItem("")
         self.input_delim_box.addItem("")
         self.input_delim_box.addItem("")
+        self.input_delim_box.addItem("")
         self.gridLayout.addWidget(self.input_delim_box, 0, 4, 1, 1)
         spacerItem1 = QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem1, 0, 5, 1, 2)
@@ -235,14 +236,14 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tab_widget.setCurrentIndex(0)
-        self.end_box.setCurrentIndex(1)
+        self.end_box.setCurrentIndex(0)
         self.baudrate_box.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Монитор последовательного порта"))
-        self.end_box.setItemText(1, _translate("MainWindow", "\\n\\r"))
+        self.end_box.setItemText(1, _translate("MainWindow", "\\r\\n"))
         self.end_box.setItemText(2, _translate("MainWindow", "\\n"))
         self.end_box.setItemText(3, _translate("MainWindow", "\\r"))
         self.send_btn.setText(_translate("MainWindow", "Отправить"))
@@ -255,8 +256,9 @@ class Ui_MainWindow(object):
         self.connect_btn.setText(_translate("MainWindow", "Подключиться"))
         self.input_delim_label.setText(_translate("MainWindow", "Разделитель"))
         self.input_delim_box.setItemText(0, _translate("MainWindow", ";"))
-        self.input_delim_box.setItemText(1, _translate("MainWindow", ","))
-        self.input_delim_box.setItemText(2, _translate("MainWindow", "\\t"))
+        self.input_delim_box.setItemText(1, _translate("MainWindow", ":"))
+        self.input_delim_box.setItemText(2, _translate("MainWindow", ","))
+        self.input_delim_box.setItemText(3, _translate("MainWindow", "\\t"))
         self.baudreate_label.setText(_translate("MainWindow", "Скорость"))
         self.tab_widget.setTabText(self.tab_widget.indexOf(self.io_tab), _translate("MainWindow", "Соединение"))
         self.label_2.setText(_translate("MainWindow", "DSV"))

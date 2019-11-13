@@ -16,7 +16,7 @@ import sqlite3
 
 
 # словарь для преобразования значений выпадающих списков
-CHAR_REF = {'\\n\\r': '\n\r', '\\n': '\n', '\\r': '\r', '\\t': '\t'}
+CHAR_REF = {'\\r\\n': '\r\n', '\\n': '\n', '\\r': '\r', '\\t': '\t'}
 
 
 # Параллельный поток приёма значений через последовательный порт
@@ -204,16 +204,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # функция отправки данных через последовательный порт
     def send(self):
         if self.connection:
-            for val in self.input_line.text().split():
-                if val.isdigit():
-                    val = int.to_bytes(int(val), 1, 'big')
-                else:
-                    val = val.encode('utf8')
-                self.ser.write(val)
-                self.ser.write(' '.encode('utf8'))
+            self.ser.write(self.input_line.text().encode('utf8'))
             end = self.end_box.currentText()
             self.ser.write(CHAR_REF.get(end, end).encode('utf8'))
             self.input_line.clear()
+        self.update()
 
     # функция обновления списка доступных портов
     def refresh_ports_list(self):
@@ -237,7 +232,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QCloseEvent.ignore()
 
     def dsv_export(self):
-        name, *_ = QFileDialog.getSaveFileName()
+        name, *_ = QFileDialog.getSaveFileName(self, 'Экспортировать в dsv', '', 'CSV(*.csv)')
         if name:
             with open(name, mode='w') as out:
                 delimiter = self.dsv_delim_box.currentText()
@@ -284,17 +279,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.data:
             table_name, ok = QInputDialog.getText(self, 'Новая таблица', 'Введите название таблицы')
             if ok:
-                if any(w.isdigit() for w in table_name.split()):
-                    table_name = '[' + table_name + ']'
+                table_name = '[' + table_name + ']'
                 columns = []
                 for n, col in enumerate(self.data[0]):
                     data_type = 'int' if type(col) is int else 'string'
-                    col_name = str(n)
-                    if any(w.isdigit() for w in col_name.split()):
-                        col_name = '[' + col_name + ']'
+                    col_name = '[' + str(n) + ']'
                     columns.append(col_name + ' ' + data_type)
                 try:
                     self.cur.execute(f'''CREATE TABLE {table_name} ({', '.join(columns)});''')
+                    self.sql_table_box.addItem(table_name.strip('[]'))
 
                 except sqlite3.OperationalError:
                     self.error_msg.setText('''Не удалось создать таблицу. 
@@ -305,10 +298,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.error_tab.exec()
 
     def append_to_sql_table(self):
-        pass
+        table_name = '[' + self.sql_table_box.currentText() + ']'
+        rows = ', '.join([str(tuple(d)) for d in self.data])
+        try:
+            self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
+            self.con.commit()
+        except sqlite3.OperationalError:
+            self.error_msg.setText('''Ошибка записи. Формат таблицы не 
+       соответствует формату данных''')
+            self.error_tab.exec()
 
     def overwrite_sql_table(self):
-
+        table_name = '[' + self.sql_table_box.currentText() + ']'
+        self.cur.execute(f'DELETE from {table_name}')
+        rows = ', '.join([str(tuple(d)) for d in self.data])
+        try:
+            self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
+            self.con.commit()
+        except sqlite3.OperationalError:
+            self.error_msg.setText('''Ошибка записи. Формат таблицы не 
+       соответствует формату данных''')
+            self.error_tab.exec()
 
 
 if __name__ == '__main__':
