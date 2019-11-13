@@ -1,4 +1,4 @@
-byte a = 0;
+String a;
 
 void setup() {
   Serial.begin(9600);
@@ -7,8 +7,8 @@ void setup() {
 
 void loop() {
   if(Serial.available()){
-    a = Serial.read();
+    a = Serial.readString();
   }
-  Serial.println((String) (millis() / 1000) + ';' + (millis() / 1000) + ';' +"test" + ';' + a);
+  Serial.println((String) (millis() / 1000)  + ';' +"test" + ';' + a);
   delay(100);
 }
