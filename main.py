@@ -58,8 +58,9 @@ class SerialUpdateThread(QThread):
                 self.main.error_msg.setText('Device disconnected! Check wiring')
                 self.main.error_tab.exec()
                 self.main.refresh_ports_list()
-                self.main.stop_connection()
+                self.finished.emit()
                 break
+
 
 
 # для вывода значений применяется model/view подход
@@ -174,6 +175,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # запускаем поток приёма данных
             self.update_thread = SerialUpdateThread(self, self.ser, self.data, delimiter)
+            self.update_thread.finished.connect(self.stop_connection)
             self.update_thread.start()
 
         # если не удалось подключиться, выводим сообщение об ошибке
