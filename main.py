@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QPushButton, QMessageBox, \
     QFileDialog, QInputDialog
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QTime, QThread
-from design import Ui_MainWindow
+from UI.design import Ui_MainWindow
 from time import sleep
 import serial  # библиотека дя работы с последовательными портами
-from serial.tools.list_ports import comports  # функция возвращающая список доступных портов
+from serial.tools.list_ports import comports  # функция, возвращающая список доступных портов
 import sys
 import csv
 import sqlite3
@@ -51,7 +51,7 @@ class SerialUpdateThread(QThread):
                         # self.main.model.dataChanged.emmit(self.main.model.createIndex(0, 0))
             # если время приёма вышло, просто пытаемся принять ещё раз
             except serial.serialutil.SerialTimeoutException:
-                pass
+                sleep(0.01)
 
             # если теряется соединение, выводим сообщение об ошибке и закрываем порт
             except OSError:
