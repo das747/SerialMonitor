@@ -17,6 +17,16 @@ import sqlite3
 CHAR_REF = {'\\r\\n': '\r\n', '\\n': '\n', '\\r': '\r', '\\t': '\t'}
 
 
+# преобразует матрицу для sql запроса
+def prepare_data(data):
+    type_ref = [int if all([row[n] or not row[n] is int for n in range(len(data[-1]))]) else str for
+                row in data]
+    rows = ', '.join(
+            [str(tuple([str(val) if type_ref[n] == str else val for n, val in enumerate(row)]))
+             for row in data])
+    return rows
+
+
 # Параллельный поток приёма значений через последовательный порт
 # Нужен вследствие того, что приём значений - блокирующая операция
 class SerialUpdateThread(QThread):
@@ -40,10 +50,10 @@ class SerialUpdateThread(QThread):
                                 self.main.time_chk.isChecked())
                     self.main.model.beginResetModel()
                     for i in range(len(line)):
-                        if line[i].isdigit():
-                            line[i] = int(line[i])
-                        elif type(line[i]) != str and line[i].isalpha():
+                        if type(line[i]) != str:
                             line[i] = line[i].decode()
+                            if line[i].isdigit():
+                                line[i] = int(line[i])
                     self.data.append(line)
                     self.main.model.endResetModel()
                     if self.main.scroll_chk.isChecked():
@@ -60,7 +70,6 @@ class SerialUpdateThread(QThread):
                 self.main.refresh_ports_list()
                 self.finished.emit()
                 break
-
 
 
 # для вывода значений применяется model/view подход
@@ -287,8 +296,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if ok:
                 table_name = '[' + table_name + ']'
                 columns = []
-                for n, col in enumerate(self.data[0]):
-                    data_type = 'int' if type(col) is int else 'string'
+                for n in range(len(self.data[0])):
+                    data_type = 'int' if all(
+                            [line[n] is int or not line[n] for line in self.data if line[n]]) else 'string'
                     col_name = '[' + str(n) + ']'  # экранироание на случай неправильных названий
                     columns.append(col_name + ' ' + data_type)
                 try:
@@ -307,10 +317,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # добавление данных в конец таблицы
     def append_to_sql_table(self):
         table_name = '[' + self.sql_table_box.currentText() + ']'
-        rows = ', '.join([str(tuple(d)) for d in self.data])  # форматируем данные для sql запроса
+        rows = prepare_data(self.data)  # форматируем данные для sql запроса
         try:
             self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
             self.con.commit()
+            del rows
 
         # размерность или типы данных несовместимы с имеющейся таблицей
         except sqlite3.OperationalError:
@@ -322,10 +333,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def overwrite_sql_table(self):
         table_name = '[' + self.sql_table_box.currentText() + ']'
         self.cur.execute(f'DELETE from {table_name}')  # очищаем исходную таблицу
-        rows = ', '.join([str(tuple(d)) for d in self.data])  # форматируем данные для sql запроса
+        rows = prepare_data(self.data)  # форматируем данные для sql запроса
         try:
             self.cur.execute(f'''INSERT INTO {table_name} VALUES {rows}''')
             self.con.commit()
+            del rows
 
         # размерность или типы данных несовместимы с имеющейся таблицей
         except sqlite3.OperationalError:
