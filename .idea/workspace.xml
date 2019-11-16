@@ -3,7 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="1142f7cc-4204-4492-8d4b-1338c90fc56c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/main" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/main.app/Contents/Info.plist" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/main.app/Contents/MacOS/main" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.app/Contents/MacOS/main" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/main.app/Contents/Resources/icon-windowed.icns" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -33,6 +36,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app" />
       <recent name="$PROJECT_DIR$/UI" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/tests" />
