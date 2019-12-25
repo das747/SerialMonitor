@@ -1,3 +1,6 @@
+.idea/*
+.DS_Store
+.gitignore
 sketch_oct29a/sketch_oct29a.ino
 *.csv
 *.db
